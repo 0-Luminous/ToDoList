@@ -15,8 +15,8 @@ class ToDoRouter: ToDoRouterProtocol {
     }
 
     static func createModule() -> some View {
-        let viewModel = ItemViewModel()
-        let view = ItemView(viewModel: viewModel)
+        let viewModel = ContentViewModel()
+        let view = ContentView(viewModel: viewModel)
         let interactor = ToDoInteractor()
         let router = ToDoRouter()
         let presenter = ToDoPresenter(view: viewModel)

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct AddTaskView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ItemViewModel
+    @ObservedObject var viewModel: ContentViewModel
     @State private var title: String = ""
     @State private var content: String = ""
     private let date = Date()
@@ -26,9 +26,16 @@ struct AddTaskView: View {
                         .foregroundColor(.white)
 
                     // Дата
-                    Text(date.formatted(date: .numeric, time: .omitted))
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                    Text(
+                        date.formatted(
+                            Date.FormatStyle()
+                                .day(.twoDigits)
+                                .month(.twoDigits)
+                                .year(.twoDigits)
+                                .locale(Locale(identifier: "ru_RU")))
+                    )
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
 
                     // Описание
                     TextField("Описание задачи", text: $content, axis: .vertical)
@@ -71,5 +78,5 @@ struct AddTaskView: View {
 }
 
 #Preview {
-    AddTaskView(viewModel: ItemViewModel())
+    AddTaskView(viewModel: ContentViewModel())
 }
