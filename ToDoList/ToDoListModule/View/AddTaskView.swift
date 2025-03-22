@@ -43,10 +43,15 @@ struct AddTaskView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Назад") {
+                    Button {
                         dismiss()
+                    } label: {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Назад")
+                        }
+                        .foregroundColor(.yellow)
                     }
-                    .foregroundColor(.yellow)
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
