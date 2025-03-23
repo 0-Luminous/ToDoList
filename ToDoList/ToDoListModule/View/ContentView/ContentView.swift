@@ -17,7 +17,7 @@ class ContentViewModel: ObservableObject, ToDoViewProtocol {
     }
     @Published var isAddingNewItem: Bool = false
 
-    var presenter: ToDoPresenter?
+    var presenter: ToDoPresenterProtocol?
 
     init() {
         self.presenter = ToDoPresenter(view: self)
@@ -28,6 +28,11 @@ class ContentViewModel: ObservableObject, ToDoViewProtocol {
         DispatchQueue.main.async {
             self.items = items
         }
+    }
+
+    func onViewDidLoad() {
+        print("🚀 ContentViewModel: onViewDidLoad вызван")
+        presenter?.viewDidLoad()
     }
 }
 
@@ -44,22 +49,27 @@ struct ContentView: View {
                 // Список задач
                 List {
                     ForEach(viewModel.items) { item in
-                        TaskRow(
-                            item: item,
-                            onToggle: {
-                                viewModel.presenter?.toggleItem(id: item.id)
-                            },
-                            onEdit: {
-                                viewModel.presenter?.editItem(
-                                    id: item.id, title: item.title, content: item.content)
-                            },
-                            onDelete: {
-                                viewModel.presenter?.deleteItem(id: item.id)
-                            },
-                            onShare: {
-                                viewModel.presenter?.shareItem(id: item.id)
-                            }
-                        )
+                        VStack(spacing: 0) {
+                            TaskRow(
+                                item: item,
+                                onToggle: {
+                                    viewModel.presenter?.toggleItem(id: item.id)
+                                },
+                                onEdit: {
+                                    viewModel.presenter?.editItem(
+                                        id: item.id, title: item.title, content: item.content)
+                                },
+                                onDelete: {
+                                    viewModel.presenter?.deleteItem(id: item.id)
+                                },
+                                onShare: {
+                                    viewModel.presenter?.shareItem(id: item.id)
+                                }
+                            )
+                            .padding(.horizontal, 10)
+                        }
+                        // Отключаем системный разделитель
+                        //.listRowSeparator(.hidden)
                     }
                     .onDelete { indexSet in
                         indexSet.forEach { index in
@@ -68,10 +78,12 @@ struct ContentView: View {
                         }
                     }
                 }
-                .padding(.vertical, 8)
-                .listRowBackground(Color.black)
-                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-                
+                .listStyle(PlainListStyle())
+                .onAppear {
+                    UITableView.appearance().backgroundColor = UIColor.black
+                    viewModel.onViewDidLoad()
+                }
+
                 // Нижняя панель
                 BottomBar(itemCount: viewModel.items.count) {
                     viewModel.isAddingNewItem = true
@@ -84,7 +96,3 @@ struct ContentView: View {
         }
     }
 }
-
-
-
-

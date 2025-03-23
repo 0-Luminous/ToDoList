@@ -14,7 +14,7 @@ class ToDoRouter: ToDoRouterProtocol {
         self.viewController = viewController
     }
 
-    static func createModule() -> some View {
+    static func createModule() -> ContentView {
         let viewModel = ContentViewModel()
         let view = ContentView(viewModel: viewModel)
         let interactor = ToDoInteractor()
@@ -25,6 +25,9 @@ class ToDoRouter: ToDoRouterProtocol {
         presenter.interactor = interactor
         presenter.router = router
         interactor.presenter = presenter
+
+        print("🚀 Router: Инициализация модуля и загрузка данных")
+        presenter.viewDidLoad()
 
         return view
     }

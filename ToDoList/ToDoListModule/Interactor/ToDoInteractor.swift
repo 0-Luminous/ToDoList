@@ -1,3 +1,4 @@
+import CoreData
 //
 //  ToDoInteractor.swift
 //  ToDoList
@@ -7,55 +8,162 @@
 import Foundation
 
 class ToDoInteractor: ToDoInteractorProtocol {
-    private var todoItems: [ToDoItem] = []
     weak var presenter: ToDoPresenterProtocol?
+    private let viewContext = PersistenceController.shared.container.viewContext
+
+    // Конвертирует CoreData объект в ToDoItem
+    private func convertToToDoItem(_ entity: NSManagedObject) -> ToDoItem {
+        let id = entity.value(forKey: "id") as! UUID
+        let title = entity.value(forKey: "title") as! String
+        let content = entity.value(forKey: "content") as! String
+        let date = entity.value(forKey: "date") as! Date
+        let isCompleted = entity.value(forKey: "isCompleted") as! Bool
+
+        return ToDoItem(
+            id: id, title: title, content: content, date: date, isCompleted: isCompleted)
+    }
 
     func fetchItems() {
-        // Здесь можно добавить загрузку из CoreData
-        presenter?.didFetchItems(ToDoItem: todoItems)
+        let request = NSFetchRequest<NSManagedObject>(entityName: "CDToDoItem")
+
+        do {
+            let result = try viewContext.fetch(request)
+            let items = result.map { convertToToDoItem($0) }
+            presenter?.didFetchItems(ToDoItem: items)
+        } catch {
+            print("Ошибка при загрузке данных: \(error)")
+            presenter?.didFetchItems(ToDoItem: [])
+        }
     }
 
     func addItem(title: String, content: String) {
-        let newItem = ToDoItem(
-            title: title,
-            content: content,
-            date: Date()
-        )
-        todoItems.append(newItem)
+        print("📝 Попытка добавить новый элемент: \(title)")
+
+        // Проверка наличия сущности
+        guard let entity = NSEntityDescription.entity(forEntityName: "CDToDoItem", in: viewContext)
+        else {
+            print("❌ Ошибка: сущность CDToDoItem не найдена в модели CoreData")
+            return
+        }
+
+        print("✅ Сущность CDToDoItem найдена")
+        let newItem = NSManagedObject(entity: entity, insertInto: viewContext)
+
+        let newID = UUID()
+        newItem.setValue(newID, forKey: "id")
+        newItem.setValue(title, forKey: "title")
+        newItem.setValue(content, forKey: "content")
+        newItem.setValue(Date(), forKey: "date")
+        newItem.setValue(false, forKey: "isCompleted")
+
+        print("📝 Созданный элемент: ID=\(newID), title=\(title)")
+
+        saveContext()
+        print("🔄 Уведомляем презентер о добавлении элемента")
         presenter?.didAddItem()
     }
+
     func deleteItem(id: UUID) {
-        todoItems.removeAll { $0.id == id }
-        presenter?.didDeleteItem()
+        let request = NSFetchRequest<NSManagedObject>(entityName: "CDToDoItem")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+
+        do {
+            let items = try viewContext.fetch(request)
+            if let itemToDelete = items.first {
+                viewContext.delete(itemToDelete)
+                saveContext()
+            }
+            presenter?.didDeleteItem()
+        } catch {
+            print("Ошибка при удалении: \(error)")
+        }
     }
 
     func toggleItem(id: UUID) {
-        if let index = todoItems.firstIndex(where: { $0.id == id }) {
-            todoItems[index].isCompleted.toggle()
-            presenter?.didToggleItem()
+        let request = NSFetchRequest<NSManagedObject>(entityName: "CDToDoItem")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+
+        do {
+            let items = try viewContext.fetch(request)
+            if let item = items.first {
+                let currentStatus = item.value(forKey: "isCompleted") as! Bool
+                item.setValue(!currentStatus, forKey: "isCompleted")
+                saveContext()
+                presenter?.didToggleItem()
+            }
+        } catch {
+            print("Ошибка при обновлении статуса: \(error)")
         }
     }
 
     func searchItems(query: String) {
-        let filtered =
-            query.isEmpty
-            ? todoItems
-            : todoItems.filter {
-                $0.title.localizedCaseInsensitiveContains(query)
-                    || $0.content.localizedCaseInsensitiveContains(query)
-            }
-        presenter?.didFetchItems(ToDoItem: filtered)
+        let request = NSFetchRequest<NSManagedObject>(entityName: "CDToDoItem")
+
+        if !query.isEmpty {
+            request.predicate = NSPredicate(
+                format: "title CONTAINS[c] %@ OR content CONTAINS[c] %@",
+                query, query
+            )
+        }
+
+        do {
+            let result = try viewContext.fetch(request)
+            let items = result.map { convertToToDoItem($0) }
+            presenter?.didFetchItems(ToDoItem: items)
+        } catch {
+            print("Ошибка при поиске: \(error)")
+            presenter?.didFetchItems(ToDoItem: [])
+        }
     }
 
     func editItem(id: UUID, title: String, content: String) {
-        if let index = todoItems.firstIndex(where: { $0.id == id }) {
-            todoItems[index].title = title
-            todoItems[index].content = content
-            presenter?.didFetchItems(ToDoItem: todoItems)
+        let request = NSFetchRequest<NSManagedObject>(entityName: "CDToDoItem")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+
+        do {
+            let items = try viewContext.fetch(request)
+            if let item = items.first {
+                item.setValue(title, forKey: "title")
+                item.setValue(content, forKey: "content")
+                saveContext()
+                fetchItems()
+            }
+        } catch {
+            print("Ошибка при редактировании: \(error)")
         }
     }
 
     func getItem(id: UUID) -> ToDoItem? {
-        return todoItems.first { $0.id == id }
+        let request = NSFetchRequest<NSManagedObject>(entityName: "CDToDoItem")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+
+        do {
+            let items = try viewContext.fetch(request)
+            if let item = items.first {
+                return convertToToDoItem(item)
+            }
+        } catch {
+            print("Ошибка при получении элемента: \(error)")
+        }
+
+        return nil
+    }
+
+    // Вспомогательный метод для сохранения контекста
+    private func saveContext() {
+        do {
+            if viewContext.hasChanges {
+                try viewContext.save()
+                print("✅ Данные успешно сохранены в CoreData")
+            } else {
+                print("⚠️ Нет изменений для сохранения в CoreData")
+            }
+        } catch {
+            print("❌ Ошибка при сохранении контекста: \(error)")
+            // Добавим более подробную информацию об ошибке
+            if let nserror = error as NSError? {
+                print("Подробная информация об ошибке: \(nserror.userInfo)")
+            }
+        }
     }
 }

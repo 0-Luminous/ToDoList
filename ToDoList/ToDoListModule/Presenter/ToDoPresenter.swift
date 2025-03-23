@@ -24,6 +24,7 @@ class ToDoPresenter: ToDoPresenterProtocol {
     }
 
     func didAddItem() {
+        print("🔄 Presenter: Запрос на обновление списка после добавления")
         interactor?.fetchItems()
     }
 
