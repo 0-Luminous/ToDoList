@@ -16,6 +16,7 @@ class ContentViewModel: ObservableObject, ToDoViewProtocol {
         }
     }
     @Published var isAddingNewItem: Bool = false
+    @Published var editingItem: ToDoItem? = nil
 
     var presenter: ToDoPresenterProtocol?
 
@@ -45,6 +46,7 @@ struct ContentView: View {
                 // Поисковая строка
                 SearchBar(text: $viewModel.searchText)
                     .padding(.horizontal, 17)
+                    .padding(.bottom, 16)
 
                 // Список задач
                 List {
@@ -56,8 +58,7 @@ struct ContentView: View {
                                     viewModel.presenter?.toggleItem(id: item.id)
                                 },
                                 onEdit: {
-                                    viewModel.presenter?.editItem(
-                                        id: item.id, title: item.title, content: item.content)
+                                    viewModel.editingItem = item
                                 },
                                 onDelete: {
                                     viewModel.presenter?.deleteItem(id: item.id)
@@ -80,7 +81,6 @@ struct ContentView: View {
                 }
                 .listStyle(PlainListStyle())
                 .onAppear {
-                    UITableView.appearance().backgroundColor = UIColor.black
                     viewModel.onViewDidLoad()
                 }
 
@@ -91,7 +91,10 @@ struct ContentView: View {
             }
             .navigationTitle("Задачи")
             .fullScreenCover(isPresented: $viewModel.isAddingNewItem) {
-                AddTaskView(viewModel: viewModel)
+                AddOrEditTaskView(viewModel: viewModel)
+            }
+            .fullScreenCover(item: $viewModel.editingItem) { item in
+                AddOrEditTaskView(viewModel: viewModel, item: item)
             }
         }
     }

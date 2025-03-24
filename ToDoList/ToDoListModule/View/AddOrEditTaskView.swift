@@ -1,5 +1,5 @@
 //
-//  AddTaskView.swift
+//  AddOrEditTaskView.swift
 //  ToDoList
 //
 //  Created by Yan on 21/3/25.
@@ -7,12 +7,33 @@
 
 import SwiftUI
 
-struct AddTaskView: View {
+struct AddOrEditTaskView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ContentViewModel
+
+    // Необязательный параметр для редактирования
+    var editingItem: ToDoItem?
+
     @State private var title: String = ""
     @State private var content: String = ""
-    private let date = Date()
+    private var date: Date
+
+    // Инициализатор для создания новой задачи
+    init(viewModel: ContentViewModel) {
+        self.viewModel = viewModel
+        self.editingItem = nil
+        self.date = Date()
+        // _title и _content уже инициализированы пустыми строками
+    }
+
+    // Инициализатор для редактирования существующей задачи
+    init(viewModel: ContentViewModel, item: ToDoItem) {
+        self.viewModel = viewModel
+        self.editingItem = item
+        self._title = State(initialValue: item.title)
+        self._content = State(initialValue: item.content)
+        self.date = item.date
+    }
 
     var body: some View {
         NavigationView {
@@ -26,16 +47,9 @@ struct AddTaskView: View {
                         .foregroundColor(.white)
 
                     // Дата
-                    Text(
-                        date.formatted(
-                            Date.FormatStyle()
-                                .day(.twoDigits)
-                                .month(.twoDigits)
-                                .year(.twoDigits)
-                                .locale(Locale(identifier: "ru_RU")))
-                    )
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    Text(formattedDate(date))
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
 
                     // Описание
                     TextField("Описание задачи", text: $content, axis: .vertical)
@@ -63,7 +77,14 @@ struct AddTaskView: View {
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        viewModel.presenter?.addItem(title: title, content: content)
+                        if let item = editingItem {
+                            // Режим редактирования
+                            viewModel.presenter?.editItem(
+                                id: item.id, title: title, content: content)
+                        } else {
+                            // Режим добавления
+                            viewModel.presenter?.addItem(title: title, content: content)
+                        }
                         dismiss()
                     } label: {
                         Text("Готово")
@@ -75,8 +96,14 @@ struct AddTaskView: View {
             }
         }
     }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yy"
+        return formatter.string(from: date)
+    }
 }
 
 #Preview {
-    AddTaskView(viewModel: ContentViewModel())
+    AddOrEditTaskView(viewModel: ContentViewModel())
 }
