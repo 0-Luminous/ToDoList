@@ -11,7 +11,6 @@ struct AddOrEditTaskView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ContentViewModel
 
-    // Необязательный параметр для редактирования
     var editingItem: ToDoItem?
 
     @State private var title: String = ""
@@ -41,17 +40,15 @@ struct AddOrEditTaskView: View {
                 Color.black.edgesIgnoringSafeArea(.all)
 
                 VStack(alignment: .leading, spacing: 20) {
-                    // Заголовок
+                    
                     TextField("Название задачи", text: $title)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
 
-                    // Дата
-                    Text(formattedDate(date))
+                    Text(date.formattedForTodoList())
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
 
-                    // Описание
                     TextField("Описание задачи", text: $content, axis: .vertical)
                         .font(.system(size: 16))
                         .foregroundColor(.white)
@@ -95,12 +92,6 @@ struct AddOrEditTaskView: View {
                 }
             }
         }
-    }
-
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yy"
-        return formatter.string(from: date)
     }
 }
 

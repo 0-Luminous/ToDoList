@@ -26,13 +26,11 @@ struct TaskRow: View {
                 .foregroundColor(.white)
                 .lineLimit(2)
 
-            Text(formattedDate(item.date))
+            Text(item.date.formattedForTodoList())
                 .font(.caption)
                 .foregroundColor(.gray)
         }
-        // .background(Color(red: 0.153, green: 0.153, blue: 0.161))
-        .frame(width: 320)
-        // .padding(.horizontal, 16)
+        .frame(width: 320, height: 106)
         .padding(.vertical, 12)
         .cornerRadius(12)
     }
@@ -60,7 +58,7 @@ struct TaskRow: View {
                     .lineLimit(2)
                     .padding(.leading, 30)
 
-                Text(formattedDate(item.date))
+                Text(item.date.formattedForTodoList())
                     .font(.caption)
                     .foregroundColor(.gray)
                     .padding(.leading, 30)
@@ -80,26 +78,16 @@ struct TaskRow: View {
                     Label("Удалить", systemImage: "trash")
                 }
             } preview: {
-                // При открытии контекстного меню
                 taskBody
                     .onAppear {
                         isLongPressed = true
                     }
             }
             .onDisappear {
-                // При закрытии контекстного меню
                 isLongPressed = false
             }
         }
     }
-
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM/yy"
-        return formatter.string(from: date)
-    }
-
-    // Публичное свойство для проверки состояния долгого нажатия
     var shouldHideDivider: Bool {
         return isLongPressed
     }

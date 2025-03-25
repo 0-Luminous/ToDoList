@@ -6,5 +6,5 @@
 //
 
 protocol ToDoViewProtocol: AnyObject {
-    func displayItems(_ ToDoItem: [ToDoItem])
+    func displayItems(_ items: [ToDoItem])
 }

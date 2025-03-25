@@ -13,13 +13,11 @@ struct BottomBar: View {
 
     var body: some View {
         ZStack {
-            // Текст с количеством задач будет на нижнем слое
             Text("\(itemCount) Задач")
                 .foregroundColor(.gray)
                 .font(.system(size: 17))
                 .frame(maxWidth: .infinity)
 
-            // Кнопка будет поверх текста
             HStack {
                 Spacer()
                 Button(action: onAddTap) {

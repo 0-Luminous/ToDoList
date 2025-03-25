@@ -8,11 +8,6 @@ import SwiftUI
 import UIKit
 
 class ToDoRouter: ToDoRouterProtocol {
-    weak var viewController: UIViewController?
-
-    init(viewController: UIViewController? = nil) {
-        self.viewController = viewController
-    }
 
     static func createModule() -> ContentView {
         let viewModel = ContentViewModel()
