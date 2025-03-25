@@ -70,7 +70,7 @@ struct ContentView: View {
                             .padding(.horizontal, 10)
                         }
                         // Отключаем системный разделитель
-                        //.listRowSeparator(.hidden)
+                        .listRowSeparator(.hidden)
                     }
                     .onDelete { indexSet in
                         indexSet.forEach { index in

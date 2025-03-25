@@ -14,6 +14,29 @@ struct TaskRow: View {
     let onDelete: () -> Void
     let onShare: () -> Void
 
+    @State private var isLongPressed: Bool = false
+
+    var taskBody: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(item.title)
+                .foregroundColor(.white)
+
+            Text(item.content)
+                .font(.subheadline)
+                .foregroundColor(.white)
+                .lineLimit(2)
+
+            Text(formattedDate(item.date))
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        // .background(Color(red: 0.153, green: 0.153, blue: 0.161))
+        .frame(width: 320)
+        // .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .cornerRadius(12)
+    }
+
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 8) {
@@ -41,7 +64,9 @@ struct TaskRow: View {
                     .font(.caption)
                     .foregroundColor(.gray)
                     .padding(.leading, 30)
+                Divider()
             }
+            .contentShape(Rectangle())
             .contextMenu {
                 Button(action: onEdit) {
                     Label("Редактировать", systemImage: "pencil")
@@ -54,6 +79,16 @@ struct TaskRow: View {
                 Button(role: .destructive, action: onDelete) {
                     Label("Удалить", systemImage: "trash")
                 }
+            } preview: {
+                // При открытии контекстного меню
+                taskBody
+                    .onAppear {
+                        isLongPressed = true
+                    }
+            }
+            .onDisappear {
+                // При закрытии контекстного меню
+                isLongPressed = false
             }
         }
     }
@@ -62,5 +97,10 @@ struct TaskRow: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/yy"
         return formatter.string(from: date)
+    }
+
+    // Публичное свойство для проверки состояния долгого нажатия
+    var shouldHideDivider: Bool {
+        return isLongPressed
     }
 }
